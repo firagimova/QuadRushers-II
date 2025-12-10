@@ -1638,7 +1638,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4a7e09d1999f2d4181e58e25eb05e24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  detectionRadius: 5
+  detectionRadius: 1
   targetTag: Environment
 --- !u!135 &732140851
 SphereCollider:
@@ -1659,7 +1659,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.041803807
+  m_Radius: 0.1
   m_Center: {x: 0, y: -0.00025882304, z: 0.0023186465}
 --- !u!4 &738799488 stripped
 Transform:
