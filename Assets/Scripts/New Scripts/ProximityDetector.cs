@@ -1,4 +1,6 @@
+using Resources;
 using UnityEngine;
+using static EventList;
 
 [RequireComponent(typeof(SphereCollider))]
 public class ProximityDetector : MonoBehaviour
@@ -26,6 +28,7 @@ public class ProximityDetector : MonoBehaviour
         if (other.CompareTag(targetTag))
         {
             print("YOU ARE CLOSE TO: " + other.name);
+            EventBus<DetectionWarning>.Emit(this, new DetectionWarning());
         }
     }
 
