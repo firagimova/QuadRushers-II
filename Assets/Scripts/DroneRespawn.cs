@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using Resources;
 using UnityEngine;
+using static EventList;
 
 public class DroneRespawn : MonoBehaviour
 {
@@ -30,9 +32,11 @@ public class DroneRespawn : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Environment") && !isRespawning)
         {
+            EventBus<DroneCrashed>.Emit(this, new DroneCrashed());
+
             StartCoroutine(DisableControlsAndRespawn(3f));
             SwitchCamera(respawnCamera);
-            Debug.Log("Çok sert bir þekilde çarptýn!");
+            Debug.Log("Crashed");
         }
     }
 
