@@ -17,6 +17,8 @@ public class DroneController : MonoBehaviour
     private float batteryLevel = 100f; // Pil seviyesi
     [SerializeField] float batteryDecreaseRate = 0.5f; // Pil azalma h�z� (%/s)
     [SerializeField] float batteryPowerRate = 1f; // Pil azalma h�z� (%/s)
+    [SerializeField] float batteryDecreaseRateActive = 2f; // Pil azalma h�z� kuvvet uyguland���nda (%/s)
+    private bool isApplyingForce = false; // Drone'a kuvvet uygulan�yor mu
 
     void UpdateBatteryLevel()
     {
@@ -26,7 +28,8 @@ public class DroneController : MonoBehaviour
 
     void Battery()
     {
-        float decreaseAmount = batteryDecreaseRate * Time.deltaTime;
+        float currentDecreaseRate = isApplyingForce ? batteryDecreaseRateActive : batteryDecreaseRate;
+        float decreaseAmount = currentDecreaseRate * Time.deltaTime;
         batteryLevel -= decreaseAmount;
     }
 
@@ -38,6 +41,12 @@ public class DroneController : MonoBehaviour
             batteryLevel += batteryPowerRate;
             batteryLevel = Mathf.Clamp(batteryLevel, 0f, 100f);
             batteryLevelText.text = "%" + batteryLevel.ToString("F0");
+            
+            // Notify QuestManager
+            if (QuestManager.Instance != null)
+            {
+                QuestManager.Instance.OnRingCollected();
+            }
         }
     }
 
@@ -60,7 +69,12 @@ public class DroneController : MonoBehaviour
         GetComponent<DroneController>().enabled = false;
         droneThrust = 5f;
         dronePropellerSpeed = 50f;
-        Debug.Log("�arj bitti mq");
+        
+        // Notify QuestManager
+        if (QuestManager.Instance != null)
+        {
+            QuestManager.Instance.OnCrash();
+        }
     }
 
     // UNITY ZIPZIPLARI BA�LANGI�
@@ -72,6 +86,7 @@ public class DroneController : MonoBehaviour
     void FixedUpdate()
     {
        // Debug.Log(transform.position.y);
+        isApplyingForce = false; // Reset force state each frame
         CheckController();
         DronePropeller();
         if (isForward)
@@ -95,6 +110,14 @@ public class DroneController : MonoBehaviour
         Battery();
         CheckBatteryLevel();
         batteryLevelText.text = "%" + batteryLevel.ToString("F0");
+        
+        // Update QuestManager
+        if (QuestManager.Instance != null)
+        {
+            QuestManager.Instance.UpdateSpeed(speed);
+            QuestManager.Instance.UpdateAltitude(height);
+            QuestManager.Instance.UpdateBattery(batteryLevel);
+        }
 
     }
 
@@ -128,11 +151,13 @@ public class DroneController : MonoBehaviour
         if (Input.GetKey(KeyCode.W) || droneAltitude > 0)
         {
             droneRb.AddForce(transform.up * droneSpeed * droneGravity, ForceMode.Acceleration);
+            isApplyingForce = true;
         }
 
         else if (Input.GetKey(KeyCode.S) || droneAltitude < 0)
         {
             transform.Translate(-Vector3.up * droneSpeed * Time.deltaTime);
+            isApplyingForce = true;
         }
 
         else
@@ -147,10 +172,12 @@ public class DroneController : MonoBehaviour
         if (Input.GetKey(KeyCode.A) || droneYaw < 0)
         {
             droneRb.AddTorque(-Vector3.up * droneYawer, ForceMode.Acceleration);
+            isApplyingForce = true;
         }
         else if (Input.GetKey(KeyCode.D) || droneYaw > 0)
         {
             droneRb.AddTorque(Vector3.up * droneYawer, ForceMode.Acceleration);
+            isApplyingForce = true;
         }
         else
         {
@@ -167,21 +194,25 @@ public class DroneController : MonoBehaviour
         if (Input.GetKey(KeyCode.UpArrow) || dronePitch > 0)
         {
             transform.Rotate(Vector3.right * droneDynamic * Time.deltaTime);
+            isApplyingForce = true;
         }
 
         else if (Input.GetKey(KeyCode.DownArrow) || dronePitch < 0)
         {
             transform.Rotate(-Vector3.right * droneDynamic * Time.deltaTime);
+            isApplyingForce = true;
         }
 
         else if (Input.GetKey(KeyCode.LeftArrow) || droneRoll < 0)
         {
             transform.Rotate(Vector3.forward * droneDynamic * Time.deltaTime);
+            isApplyingForce = true;
         }
 
         else if (Input.GetKey(KeyCode.RightArrow) || droneRoll > 0)
         {
             transform.Rotate(-Vector3.forward * droneDynamic * Time.deltaTime);
+            isApplyingForce = true;
         }
 
         else
@@ -200,6 +231,7 @@ public class DroneController : MonoBehaviour
             droneRb.AddForce(transform.forward * droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
             isForward = true;
+            isApplyingForce = true;
         }
 
         else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.DownArrow) || droneAltitude > 0 && pitch < 0)
@@ -207,6 +239,7 @@ public class DroneController : MonoBehaviour
             droneRb.AddForce(transform.forward * -droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
             isForward = true;
+            isApplyingForce = true;
         }
 
         else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.RightArrow) || droneAltitude > 0 && roll > 0)
@@ -214,6 +247,7 @@ public class DroneController : MonoBehaviour
             droneRb.AddForce(transform.right * droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
             isForward = true;
+            isApplyingForce = true;
         }
 
         else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftArrow) || droneAltitude > 0 && roll < 0)
@@ -221,6 +255,7 @@ public class DroneController : MonoBehaviour
             droneRb.AddForce(transform.right * -droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
             isForward = true;
+            isApplyingForce = true;
         }
     }
     void CheckController()

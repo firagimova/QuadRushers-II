@@ -11,8 +11,9 @@ public class ProximityDetector : MonoBehaviour
 
     // the detection tag
     [SerializeField] private string targetTag = "Environment";
-
+    
     private SphereCollider proximityCollider;
+    private bool isWarningActive = false;
 
     private void Awake()
     {
@@ -29,6 +30,12 @@ public class ProximityDetector : MonoBehaviour
         {
             print("YOU ARE CLOSE TO: " + other.name);
             EventBus<DetectionWarning>.Emit(this, new DetectionWarning());
+            
+            // Trigger warning for quest system
+            if (!isWarningActive)
+            {
+                TriggerWarning();
+            }
         }
     }
 
@@ -38,7 +45,24 @@ public class ProximityDetector : MonoBehaviour
         if (other.CompareTag(targetTag))
         {
             print("YOU ARE FAR FROM: " + other.name);
+            
+            // Deactivate warning
+            isWarningActive = false;
+
         }
+    }
+    
+    private void TriggerWarning()
+    {
+        isWarningActive = true;
+        
+        // Notify QuestManager
+        if (QuestManager.Instance != null)
+        {
+            QuestManager.Instance.OnProximityWarning();
+        }
+        
+        Debug.Log("Proximity warning triggered!");
     }
 
     // gizmos to visualize detection radius

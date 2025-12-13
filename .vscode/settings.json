@@ -52,5 +52,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "DroneDeneme2.sln"
+    "dotnet.defaultSolution": "QuadRushers-II.sln"
 }
