@@ -12,6 +12,9 @@ public class ProximityDetector : MonoBehaviour
     // the detection tag
     [SerializeField] private string targetTag = "Environment";
     
+    [Header("Warning UI")]
+    [SerializeField] private WarningUIManager warningUIManager;
+    
     private SphereCollider proximityCollider;
     private bool isWarningActive = false;
 
@@ -55,6 +58,16 @@ public class ProximityDetector : MonoBehaviour
     private void TriggerWarning()
     {
         isWarningActive = true;
+        
+        // Show visual warning
+        if (warningUIManager != null)
+        {
+            warningUIManager.ShowWarning();
+        }
+        else
+        {
+            Debug.LogWarning("WarningUIManager is not assigned to ProximityDetector!");
+        }
         
         // Notify QuestManager
         if (QuestManager.Instance != null)
