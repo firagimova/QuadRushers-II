@@ -2,13 +2,22 @@ using System;
 using Resources;
 using UnityEngine;
 using static EventList;
+using TMPro;
 
 public class AnalyticsManager : MonoSingleton<AnalyticsManager>
 {
     private int warningCount = 0;      
     private int crashCount = 0;        
     private float questStartTime;      
-    private bool isQuestActive = false; 
+    private bool isQuestActive = false;
+
+    [SerializeField] private GameObject analyticsPanel;
+
+    [SerializeField] private TextMeshProUGUI timeText;
+    [SerializeField] private TextMeshProUGUI warningText;
+    [SerializeField] private TextMeshProUGUI crashText;
+    [SerializeField] private TextMeshProUGUI performanceText;
+
     private void OnEnable()
     {
         EventBus<QuestStarted>.AddListener(HandleQuestStarted);
@@ -29,6 +38,8 @@ public class AnalyticsManager : MonoSingleton<AnalyticsManager>
 
     private void HandleQuestStarted(object sender, QuestStarted @event)
     {
+        analyticsPanel.SetActive(false);
+
         isQuestActive = true;
         warningCount = 0;
         crashCount = 0;
@@ -56,6 +67,8 @@ public class AnalyticsManager : MonoSingleton<AnalyticsManager>
     {
         if (!isQuestActive) return;
 
+        analyticsPanel.SetActive(true);
+
         isQuestActive = false;
         float totalDuration = Time.time - questStartTime; 
 
@@ -65,10 +78,17 @@ public class AnalyticsManager : MonoSingleton<AnalyticsManager>
         Debug.Log($"Total Warning: {warningCount}");
         Debug.Log($"Total Crash: {crashCount}");
 
+        // update UI
+        timeText.text = $"Total Time: {totalDuration:F2} seconds";
+        warningText.text = $"Total Warnings: {warningCount}";
+        crashText.text = $"Total Crashes: {crashCount}";
+
         // calculate score
         float baseScore = 1000f;
         float finalScore = baseScore - (crashCount * 200) - (warningCount * 50) - (totalDuration * 2);
         Debug.Log($"Performance Point: {Mathf.Max(0, finalScore):F0}");
         Debug.Log("===========================================");
+
+        performanceText.text = $"Performance Point: {Mathf.Max(0, finalScore):F0}";
     }
 }
