@@ -85,6 +85,10 @@ public class DroneController : MonoBehaviour
 
     void FixedUpdate()
     {
+        // Debug.Log($"LS V: {Input.GetAxis("LeftStickVertical"):F2} | " +
+        //       $"LS H: {Input.GetAxis("LeftStickHorizontal"):F2} | " +
+        //       $"RS V: {Input.GetAxis("RightStickVertical"):F2} | " +
+        //       $"RS H: {Input.GetAxis("RightStickHorizontal"):F2}");
        // Debug.Log(transform.position.y);
         isApplyingForce = false; // Reset force state each frame
         CheckController();
@@ -141,29 +145,37 @@ public class DroneController : MonoBehaviour
     [SerializeField] Transform DronePropellerRF;
     public Rigidbody droneRb;
     private bool isForward;
+    [SerializeField] private float inputDeadzone = 0.2f; // Deadzone for controller inputs
     // DRONE D�NAM�K DE���KENLER� B�T��
+    
+    // Helper function to apply deadzone to input
+    private float ApplyDeadzone(float input, float deadzone = 0.2f)
+    {
+        if (Mathf.Abs(input) < deadzone)
+            return 0f;
+        
+        // Remap the value to account for deadzone
+        float sign = Mathf.Sign(input);
+        float absInput = Mathf.Abs(input);
+        float remapped = (absInput - deadzone) / (1f - deadzone);
+        return sign * Mathf.Clamp01(remapped);
+    }
 
-    // DRONE D�NAM�KLER� BA�LANGI�
+    // DRONE DINAMIKLER BALANGI
     void LeftControllersAltitude()
     {
-        // Combine all input sources: keyboard, gamepad, and touch joystick
+        // Left Stick controls Altitude (W/S equivalent)
         float joystickInput = joystickLeft != null ? joystickLeft.Vertical : 0f;
-        float gamepadInput = Input.GetAxis("Vertical");
+        float gamepadInput = ApplyDeadzone(Input.GetAxis("LeftStickVertical"), inputDeadzone);
         float droneAltitude = Mathf.Clamp(joystickInput + gamepadInput, -1f, 1f);
-        
-        // Log gamepad input
-        if (Mathf.Abs(gamepadInput) > 0.1f)
-        {
-            Debug.Log($"Gamepad Left Stick Vertical: {gamepadInput:F2}");
-        }
 
-        if (Input.GetKey(KeyCode.W) || droneAltitude > 0)
+        if (Input.GetKey(KeyCode.W) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0)
         {
             droneRb.AddForce(transform.up * droneSpeed * droneGravity, ForceMode.Acceleration);
             isApplyingForce = true;
         }
 
-        else if (Input.GetKey(KeyCode.S) || droneAltitude < 0)
+        else if (Input.GetKey(KeyCode.S) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude < 0)
         {
             transform.Translate(-Vector3.up * droneSpeed * Time.deltaTime);
             isApplyingForce = true;
@@ -176,74 +188,58 @@ public class DroneController : MonoBehaviour
     }
     void LeftControllersYaw()
     {
-        // Combine all input sources: keyboard, gamepad, and touch joystick
+        // Left Stick Horizontal controls Yaw (A/D equivalent)
         float joystickInput = joystickLeft != null ? joystickLeft.Horizontal : 0f;
-        float gamepadInput = Input.GetAxis("Horizontal");
+        float gamepadInput = ApplyDeadzone(Input.GetAxis("LeftStickHorizontal"), inputDeadzone);
         float droneYaw = Mathf.Clamp(joystickInput + gamepadInput, -1f, 1f);
-        
-        // Log gamepad input
-        if (Mathf.Abs(gamepadInput) > 0.1f)
-        {
-            Debug.Log($"Gamepad Left Stick Horizontal: {gamepadInput:F2}");
-        }
 
-        if (Input.GetKey(KeyCode.A) || droneYaw < 0)
+        if (Input.GetKey(KeyCode.A) || Mathf.Abs(droneYaw) > 0.01f && droneYaw < 0)
         {
             droneRb.AddTorque(-Vector3.up * droneYawer, ForceMode.Acceleration);
             isApplyingForce = true;
         }
-        else if (Input.GetKey(KeyCode.D) || droneYaw > 0)
+        else if (Input.GetKey(KeyCode.D) || Mathf.Abs(droneYaw) > 0.01f && droneYaw > 0)
         {
             droneRb.AddTorque(Vector3.up * droneYawer, ForceMode.Acceleration);
             isApplyingForce = true;
         }
         else
         {
-            // D�nmeyi durdurma
+            // Stop rotation
             droneRb.angularVelocity *= droneYawStabilizer;
         }
     }
 
     void RightControllers()
     {
-        // Combine all input sources: keyboard, gamepad, and touch joystick
+        // Right Stick controls Pitch and Roll (Arrow Keys equivalent)
         float joystickPitchInput = joystickRight != null ? joystickRight.Vertical : 0f;
-        float gamepadPitchInput = Input.GetAxis("RightStickVertical");
+        float gamepadPitchInput = ApplyDeadzone(Input.GetAxis("RightStickVertical"), inputDeadzone);
         float dronePitch = Mathf.Clamp(joystickPitchInput + gamepadPitchInput, -1f, 1f);
         
         float joystickRollInput = joystickRight != null ? joystickRight.Horizontal : 0f;
-        float gamepadRollInput = Input.GetAxis("RightStickHorizontal");
+        float gamepadRollInput = ApplyDeadzone(Input.GetAxis("RightStickHorizontal"), inputDeadzone);
         float droneRoll = Mathf.Clamp(joystickRollInput + gamepadRollInput, -1f, 1f);
-        
-        // Log gamepad input
-        if (Mathf.Abs(gamepadPitchInput) > 0.1f)
-        {
-            Debug.Log($"Gamepad Right Stick Vertical (Pitch): {gamepadPitchInput:F2}");
-        }
-        if (Mathf.Abs(gamepadRollInput) > 0.1f)
-        {
-            Debug.Log($"Gamepad Right Stick Horizontal (Roll): {gamepadRollInput:F2}");
-        }
 
-        if (Input.GetKey(KeyCode.UpArrow) || dronePitch > 0)
+        if (Input.GetKey(KeyCode.UpArrow) || Mathf.Abs(dronePitch) > 0.01f && dronePitch > 0)
         {
             transform.Rotate(Vector3.right * droneDynamic * Time.deltaTime);
             isApplyingForce = true;
         }
 
-        else if (Input.GetKey(KeyCode.DownArrow) || dronePitch < 0)
+        else if (Input.GetKey(KeyCode.DownArrow) || Mathf.Abs(dronePitch) > 0.01f && dronePitch < 0)
         {
             transform.Rotate(-Vector3.right * droneDynamic * Time.deltaTime);
             isApplyingForce = true;
         }
 
-        else if (Input.GetKey(KeyCode.LeftArrow) || droneRoll < 0)
+        else if (Input.GetKey(KeyCode.LeftArrow) || Mathf.Abs(droneRoll) > 0.01f && droneRoll < 0)
         {
             transform.Rotate(Vector3.forward * droneDynamic * Time.deltaTime);
             isApplyingForce = true;
         }
 
-        else if (Input.GetKey(KeyCode.RightArrow) || droneRoll > 0)
+        else if (Input.GetKey(KeyCode.RightArrow) || Mathf.Abs(droneRoll) > 0.01f && droneRoll > 0)
         {
             transform.Rotate(-Vector3.forward * droneDynamic * Time.deltaTime);
             isApplyingForce = true;
@@ -256,20 +252,21 @@ public class DroneController : MonoBehaviour
     }
     void MovementControllers()
     {
-        // Combine all input sources
+        // Left Stick controls altitude (W/S) and yaw (A/D)
         float joystickAltInput = joystickLeft != null ? joystickLeft.Vertical : 0f;
-        float gamepadAltInput = Input.GetAxis("Vertical");
+        float gamepadAltInput = ApplyDeadzone(Input.GetAxis("LeftStickVertical"), inputDeadzone);
         float droneAltitude = Mathf.Clamp(joystickAltInput + gamepadAltInput, -1f, 1f);
         
+        // Right Stick controls pitch (Up/Down arrows) and roll (Left/Right arrows)
         float joystickPitchInput = joystickRight != null ? joystickRight.Vertical : 0f;
-        float gamepadPitchInput = Input.GetAxis("RightStickVertical");
+        float gamepadPitchInput = ApplyDeadzone(Input.GetAxis("RightStickVertical"), inputDeadzone);
         float pitch = Mathf.Clamp(joystickPitchInput + gamepadPitchInput, -1f, 1f);
         
         float joystickRollInput = joystickRight != null ? joystickRight.Horizontal : 0f;
-        float gamepadRollInput = Input.GetAxis("RightStickHorizontal");
+        float gamepadRollInput = ApplyDeadzone(Input.GetAxis("RightStickHorizontal"), inputDeadzone);
         float roll = Mathf.Clamp(joystickRollInput + gamepadRollInput, -1f, 1f);
 
-        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.UpArrow) || droneAltitude > 0 && pitch > 0)
+        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.UpArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(pitch) > 0.01f && pitch > 0)
         {
             droneRb.AddForce(transform.forward * droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
@@ -277,7 +274,7 @@ public class DroneController : MonoBehaviour
             isApplyingForce = true;
         }
 
-        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.DownArrow) || droneAltitude > 0 && pitch < 0)
+        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.DownArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(pitch) > 0.01f && pitch < 0)
         {
             droneRb.AddForce(transform.forward * -droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
@@ -285,7 +282,7 @@ public class DroneController : MonoBehaviour
             isApplyingForce = true;
         }
 
-        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.RightArrow) || droneAltitude > 0 && roll > 0)
+        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.RightArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(roll) > 0.01f && roll > 0)
         {
             droneRb.AddForce(transform.right * droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
@@ -293,7 +290,7 @@ public class DroneController : MonoBehaviour
             isApplyingForce = true;
         }
 
-        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftArrow) || droneAltitude > 0 && roll < 0)
+        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(roll) > 0.01f && roll < 0)
         {
             droneRb.AddForce(transform.right * -droneSpeed * droneGravity, ForceMode.Acceleration);
             droneRb.AddForce(Vector3.up * droneThrust, ForceMode.Acceleration);
@@ -303,35 +300,36 @@ public class DroneController : MonoBehaviour
     }
     void CheckController()
     {
-        // Combine all input sources
+        // Left Stick controls altitude (W/S)
         float joystickAltInput = joystickLeft != null ? joystickLeft.Vertical : 0f;
-        float gamepadAltInput = Input.GetAxis("Vertical");
+        float gamepadAltInput = ApplyDeadzone(Input.GetAxis("LeftStickVertical"), inputDeadzone);
         float droneAltitude = Mathf.Clamp(joystickAltInput + gamepadAltInput, -1f, 1f);
         
+        // Right Stick controls pitch and roll (Arrow keys)
         float joystickPitchInput = joystickRight != null ? joystickRight.Vertical : 0f;
-        float gamepadPitchInput = Input.GetAxis("RightStickVertical");
+        float gamepadPitchInput = ApplyDeadzone(Input.GetAxis("RightStickVertical"), inputDeadzone);
         float pitch = Mathf.Clamp(joystickPitchInput + gamepadPitchInput, -1f, 1f);
         
         float joystickRollInput = joystickRight != null ? joystickRight.Horizontal : 0f;
-        float gamepadRollInput = Input.GetAxis("RightStickHorizontal");
+        float gamepadRollInput = ApplyDeadzone(Input.GetAxis("RightStickHorizontal"), inputDeadzone);
         float roll = Mathf.Clamp(joystickRollInput + gamepadRollInput, -1f, 1f);
 
-        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.UpArrow) || droneAltitude > 0 && pitch > 0)
+        if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.UpArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(pitch) > 0.01f && pitch > 0)
         {
             isForward = true;
         }
 
-        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.DownArrow) || droneAltitude > 0 && pitch < 0)
+        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.DownArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(pitch) > 0.01f && pitch < 0)
         {
             isForward = true;
         }
 
-        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftArrow) || droneAltitude > 0 && roll > 0)
+        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.LeftArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(roll) > 0.01f && roll > 0)
         {
             isForward = true;
         }
 
-        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.RightArrow) || droneAltitude > 0 && roll < 0)
+        else if (Input.GetKey(KeyCode.W) && Input.GetKey(KeyCode.RightArrow) || Mathf.Abs(droneAltitude) > 0.01f && droneAltitude > 0 && Mathf.Abs(roll) > 0.01f && roll < 0)
         {
             isForward = true;
         }
