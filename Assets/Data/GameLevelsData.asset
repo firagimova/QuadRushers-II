@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55b4186ba0fd9d04ca6dc18fa4f99db3, type: 3}
+  m_Name: GameLevelsData
+  m_EditorClassIdentifier: 
+  levels:
+  - levelName: Level 1
+    sceneName: Level1
+    levelImage: {fileID: 21300000, guid: a5bf4a87a4763804cb3e54e6c9c62e78, type: 3}
+  - levelName: Level 2
+    sceneName: Level2
+    levelImage: {fileID: 21300000, guid: fe279f93af511c44c99e77015fba1430, type: 3}
+  - levelName: Level 3
+    sceneName: Level3
+    levelImage: {fileID: 21300000, guid: e9fc261bd3e57df458bc60d1f567b9d0, type: 3}
+  - levelName: Level 4
+    sceneName: Level4
+    levelImage: {fileID: 21300000, guid: 0928f5b7075d98d4588e960299698702, type: 3}
+  - levelName: Free Roam
+    sceneName: FreeRoamScene
+    levelImage: {fileID: 21300000, guid: 11e246dc945d14cdb99d52b3a71e2c26, type: 3}
