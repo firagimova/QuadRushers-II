@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,15 +7,20 @@ using UnityEngine;
 
 public class RingFunctions : MonoBehaviour
 {
-    public float rotationSpeed = 50f; 
+    public float rotationSpeed = 50f;
 
     private Rigidbody myRigidbody;
 
     void Start()
     {
         myRigidbody = GetComponent<Rigidbody>();
-        myRigidbody.isKinematic = true; 
-        RingStartPosition();
+        myRigidbody.isKinematic = true;
+        
+        // Only auto-position if not spawned by RingSpawner in predetermined mode
+        if (RingSpawner.Instance == null || !RingSpawner.Instance.IsPredeterminedMode)
+        {
+            RingStartPosition();
+        }
     }
 
     void Update()
@@ -27,13 +32,25 @@ public class RingFunctions : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Drone"))
         {
-            CreateRing();
-            Destroy(gameObject);
             CollectRing();
+            
+            // Check spawn mode
+            if (RingSpawner.Instance != null && RingSpawner.Instance.IsPredeterminedMode)
+            {
+                // Predetermined mode: notify spawner and destroy (no respawn)
+                RingSpawner.Instance.OnPredeterminedRingCollected();
+                Destroy(gameObject);
+            }
+            else
+            {
+                // Random mode: spawn new ring and destroy this one
+                CreateRing();
+                Destroy(gameObject);
+            }
         }
         else if (other.gameObject.CompareTag("Environment"))
         {
-            Debug.Log("Yüzük açýk alanda oluþamadý.");
+            Debug.Log("Ring spawned in invalid location, repositioning...");
             RingStartPosition();
         }
     }
@@ -59,21 +76,17 @@ public class RingFunctions : MonoBehaviour
 
     private bool CheckSpawnPoint(Vector3 point)
     {
-        // Ýþlem yapmadan önce yüzüðün rigidbody'sini etkinleþtirir
         myRigidbody.isKinematic = false;
 
         RaycastHit hit;
-        // Yapay bir ýþýn oluþturuyoruz
         if (Physics.Raycast(point, Vector3.down, out hit))
         {
-            // Iþýn, çevredeki bir objeye temas ettiyse, yüzük collider'ý ile obje arasýnda bir þey var demektir
             if (hit.distance < 1f)
             {
-                myRigidbody.isKinematic = true; // Yüzükleri tekrar hareketsiz hale getirir
+                myRigidbody.isKinematic = true;
                 return false;
             }
         }
-        // Yüzüklerin rigidbody'sini tekrar etkisiz hale getirir
         myRigidbody.isKinematic = true;
         return true;
     }
@@ -99,9 +112,11 @@ public class RingFunctions : MonoBehaviour
     public static void CollectRing()
     {
         collectedRings++;
-        Debug.Log("Toplanan Yüzük Sayýsý: " + collectedRings);
+        Debug.Log("Collected Rings: " + collectedRings);
         CollectingUI ui = FindObjectOfType<CollectingUI>();
-        ui.UpdateRingText();
+        if (ui != null)
+        {
+            ui.UpdateRingText();
+        }
     }
 }
-

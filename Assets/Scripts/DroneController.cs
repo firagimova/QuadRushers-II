@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using Resources;
+using static EventList;
 
 [RequireComponent(typeof(BoxCollider))]
 [RequireComponent(typeof(Rigidbody))]
@@ -75,6 +77,9 @@ public class DroneController : MonoBehaviour
         {
             QuestManager.Instance.OnCrash();
         }
+        
+        // Emit QuestCompleted for analytics when fuel is depleted
+        EventBus<QuestCompleted>.Emit(this, new QuestCompleted());
     }
 
     // UNITY ZIPZIPLARI BA�LANGI�

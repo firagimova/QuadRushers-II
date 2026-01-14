@@ -3,6 +3,8 @@ using Resources;
 using UnityEngine;
 using static EventList;
 using TMPro;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class AnalyticsManager : MonoSingleton<AnalyticsManager>
 {
@@ -18,6 +20,8 @@ public class AnalyticsManager : MonoSingleton<AnalyticsManager>
     [SerializeField] private TextMeshProUGUI crashText;
     [SerializeField] private TextMeshProUGUI performanceText;
 
+    [SerializeField] private Button returnToMenuBtn;
+
     private void OnEnable()
     {
         EventBus<QuestStarted>.AddListener(HandleQuestStarted);
@@ -25,6 +29,8 @@ public class AnalyticsManager : MonoSingleton<AnalyticsManager>
 
         EventBus<DetectionWarning>.AddListener(HandleProximityWarning);
         EventBus<DroneCrashed>.AddListener(HandleDroneCrash);
+
+        returnToMenuBtn.onClick.AddListener(ReturnToMenu);
     }
 
     private void OnDisable()
@@ -34,6 +40,21 @@ public class AnalyticsManager : MonoSingleton<AnalyticsManager>
 
         EventBus<DetectionWarning>.RemoveListener(HandleProximityWarning);
         EventBus<DroneCrashed>.RemoveListener(HandleDroneCrash);
+    }
+
+    private void ReturnToMenu()
+    {
+        analyticsPanel.SetActive(false);
+        isQuestActive = false;
+        EventBus<QuestStarted>.RemoveListener(HandleQuestStarted);
+        EventBus<QuestCompleted>.RemoveListener(HandleQuestFinished);
+
+        EventBus<DetectionWarning>.RemoveListener(HandleProximityWarning);
+        EventBus<DroneCrashed>.RemoveListener(HandleDroneCrash);
+
+        returnToMenuBtn.onClick.RemoveListener(ReturnToMenu);
+
+        SceneManager.LoadScene("MainMenu");
     }
 
     private void HandleQuestStarted(object sender, QuestStarted @event)
