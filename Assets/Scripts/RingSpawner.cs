@@ -18,7 +18,7 @@ public class RingSpawner : MonoBehaviour
     [SerializeField] private GameObject ringPrefab;
 
     [Header("Predetermined Mode")]
-    [SerializeField] private LevelRingData levelRingData;
+    [SerializeField] private GameObject[] spawnPoints;
 
     [Header("Random Mode")]
     [SerializeField] private int randomRingCount = 5;
@@ -31,7 +31,7 @@ public class RingSpawner : MonoBehaviour
     private int totalPredeterminedRings = 0;
 
     public SpawnMode CurrentSpawnMode => spawnMode;
-    public bool IsPredeterminedMode => spawnMode == SpawnMode.Predetermined && levelRingData != null;
+    public bool IsPredeterminedMode => spawnMode == SpawnMode.Predetermined && spawnPoints != null && spawnPoints.Length > 0;
 
     void Awake()
     {
@@ -47,8 +47,8 @@ public class RingSpawner : MonoBehaviour
 
     void Start()
     {
-        // Auto-detect mode based on level data
-        if (levelRingData != null && levelRingData.RingCount > 0)
+        // Auto-detect mode based on spawn points
+        if (spawnPoints != null && spawnPoints.Length > 0)
         {
             spawnMode = SpawnMode.Predetermined;
         }
@@ -73,18 +73,20 @@ public class RingSpawner : MonoBehaviour
 
     private void SpawnPredeterminedRings()
     {
-        totalPredeterminedRings = levelRingData.RingCount;
+        totalPredeterminedRings = spawnPoints.Length;
         
-        for (int i = 0; i < levelRingData.RingCount; i++)
+        for (int i = 0; i < spawnPoints.Length; i++)
         {
-            Vector3 position = levelRingData.GetPosition(i);
-            Quaternion rotation = levelRingData.GetRotation(i);
+            if (spawnPoints[i] == null) continue;
+            
+            Vector3 position = spawnPoints[i].transform.position;
+            Quaternion rotation = spawnPoints[i].transform.rotation;
 
             GameObject ring = Instantiate(ringPrefab, position, rotation);
             spawnedRings.Add(ring);
         }
 
-        Debug.Log($"Spawned {levelRingData.RingCount} rings at predetermined positions");
+        Debug.Log($"Spawned {spawnPoints.Length} rings at predetermined positions");
     }
 
     private void SpawnRandomRings()
@@ -153,25 +155,4 @@ public class RingSpawner : MonoBehaviour
         spawnedRings.Clear();
     }
 
-    [ContextMenu("Capture Ring Positions From Scene")]
-    public void CaptureRingPositionsFromScene()
-    {
-        if (levelRingData == null)
-        {
-            Debug.LogError("LevelRingData is not assigned!");
-            return;
-        }
-
-        GameObject[] rings = GameObject.FindGameObjectsWithTag("Ring");
-        levelRingData.ringPositions.Clear();
-        levelRingData.ringRotations.Clear();
-
-        foreach (var ring in rings)
-        {
-            levelRingData.ringPositions.Add(ring.transform.position);
-            levelRingData.ringRotations.Add(ring.transform.rotation.eulerAngles);
-        }
-
-        Debug.Log($"Captured {rings.Length} ring positions to {levelRingData.name}");
-    }
 }
